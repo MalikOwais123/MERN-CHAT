@@ -1,3 +1,5 @@
+const { promisify } = require("util");
+const JWT = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
 const User = require("../models/userModel");
 const generateToken = require("../config/generateToken");
@@ -6,6 +8,7 @@ const generateToken = require("../config/generateToken");
 //@route           GET /api/user?search=
 //@access          Public
 const allUsers = asyncHandler(async (req, res) => {
+  console.log("req.query :>> ", req);
   const keyword = req.query.search
     ? {
         $or: [
@@ -15,7 +18,8 @@ const allUsers = asyncHandler(async (req, res) => {
       }
     : {};
 
-  const users = await User.find(keyword).find({ _id: { $ne: req.user._id } });
+  const users = await User.find(keyword);
+  // const users = await User.find(keyword).find({ _id: { $ne: req.user._id } });
   res.send(users);
 });
 
@@ -64,10 +68,20 @@ const registerUser = asyncHandler(async (req, res) => {
 //@access          Public
 const authUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  
-  const user = await User.findOne({ email });
-  console.log("user :>> ", user);
 
+  const user = await User.findOne({ email });
+  console.log("generateToken(user._id) :>> ", generateToken(user._id));
+  var token = null;
+  //fetch token from request header
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  const decoded = await promisify(JWT.verify)(token, process.env.JWT_SECRET);
+  console.log("decoded.id :>> ", decoded);
   if (user && (await user.matchPassword(password))) {
     res.json({
       _id: user._id,
