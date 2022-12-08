@@ -6,6 +6,7 @@
   background-image: url("./background.png");
   background-position: center;
   background-size: cover;
+  background: rgba(52, 53, 65, 1);
 }
 
 ::-webkit-scrollbar {
